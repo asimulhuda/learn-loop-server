@@ -7,7 +7,11 @@ const port = process.env.PORT || 9000;
 const app = express();
 
 const corsOptions = {
-  origin: ["http://localhost:5173", "http://localhost:5174"],
+  origin: [
+    "http://localhost:5173",
+    "https://learn-loop-1fe5d.web.app",
+    "https://learn-loop-1fe5d.firebaseapp.com",
+  ],
   credentials: true,
   optionSuccessStatus: 200,
 };
@@ -102,8 +106,63 @@ async function run() {
       res.send(result);
     });
 
+    // Get all submission used by specific user from db
+
+    app.get("/my-submissions/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { studentEmail: email };
+      const result = await submitsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // Get all pending assignment used by specific user from db
+
+    app.get("/pending-assignments/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { userEmail: email };
+      const result = await submitsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // Update assignment pending status in db
+
+    // app.put("/pending-assignments/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const assignmentData = req.body;
+    //   const query = { _id: new ObjectId(id) };
+    //   const options = { upsert: true };
+    //   const updateDoc = {
+    //     $set: {
+    //       ...assignmentData,
+    //     },
+    //   };
+    //   const result = await submitsCollection.updateOne(
+    //     query,
+    //     updateDoc,
+    //     options
+    //   );
+    //   res.send(result);
+    // });
+
+    app.put("/pending-assignments/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const assignmentData = req.body;
+        const query = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: { ...assignmentData },
+        };
+
+        const result = await submitsCollection.updateOne(query, updateDoc);
+
+        res.send(result);
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
